@@ -9,6 +9,13 @@
 Changes
 =======
 
+Version v0.12.1 (released 2025-10-14)
+
+- fix: bind `127.0.0.1` by default for service ports
+    * Binds `127.0.0.1` as the host IP for all mapped service ports.
+    * Allows overriding the host IP using the `DOCKER_SERVICES_IP_BIND`
+      environment variable.
+
 Version v0.12.0 (released 2025-04-11)
 
 - config: export `SEARCH_HOSTS` environment for OpenSearch/ElasticSearch
