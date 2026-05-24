@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
-#
-# Copyright (C) 2020-2025 CERN.
-# Copyright (C) 2024 Graz University of Technology.
-# Copyright (C) 2025 CESNET z.s.p.o.
-#
-# Docker-Services-CLI is free software; you can redistribute it and/or modify
-# it under the terms of the MIT License; see LICENSE file for more details.
+# SPDX-FileCopyrightText: 2020-2025 CERN.
+# SPDX-FileCopyrightText: 2024 Graz University of Technology.
+# SPDX-FileCopyrightText: 2025 CESNET z.s.p.o.
+# SPDX-License-Identifier: MIT
 
 """Configuration module.
 
