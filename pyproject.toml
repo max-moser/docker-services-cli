@@ -1,3 +1,67 @@
+# SPDX-FileCopyrightText: 2020-2023 CERN.
+# SPDX-FileCopyrightText: 2022-2024 Graz University of Technology.
+# SPDX-FileCopyrightText: 2026 TU Wien.
+# SPDX-License-Identifier: MIT
+
+[project]
+name = "Docker-Services-CLI"
+description = "Python module to ease the creation and management of external services."
+readme = "README.rst"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [
+  { name = "CERN", email = "info@inveniosoftware.org" },
+]
+keywords = [
+  "cli",
+  "docker",
+  "services",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+]
+dependencies = [
+  "check-manifest>=0.42",
+  "click>=7.0",
+]
+dynamic = ["version"]
+
+[project.urls]
+Repository = "https://github.com/inveniosoftware/docker-services-cli"
+
+[project.scripts]
+docker-services-cli = "docker_services_cli.cli:cli"
+
+[project.optional-dependencies]
+tests = [
+  "pytest-black>=0.6.0",
+  "pytest-cov>=3.0.0",
+  "pytest-isort>=3.0.0",
+  "pytest-pycodestyle>=2.2.0",
+  "pytest-pydocstyle>=2.2.3",
+  "pytest>=6,<9",
+  "sphinx>=4.5",
+]
+
 [build-system]
-requires = ["setuptools", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "docker_services_cli/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/docker_services_cli",
+]
+
+[tool.isort]
+profile = "black"
+
+[tool.pydocstyle]
+add_ignore = "D401"
+
+[tool.pytest.ini_options]
+addopts = '--black --isort --pydocstyle --doctest-glob="*.rst" --doctest-modules --cov=docker_services_cli --cov-report=term-missing'
+testpaths = "tests docker_services_cli"
+live_server_scope = "module"
