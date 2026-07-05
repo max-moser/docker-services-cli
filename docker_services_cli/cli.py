@@ -67,6 +67,7 @@ def env_output(env_set_command):
                     services,
                     click.get_current_context().info_name,
                     env_set_command=env_set_command,
+                    env_prefix=kwargs.get("env_prefix", ""),
                 )
 
         return update_wrapper(_print_env_output, func)
@@ -178,10 +179,16 @@ def cli(ctx, filepath, verbose):
         "This may not work on all platforms."
     ),
 )
+@click.option(
+    "--env-prefix",
+    default="",
+    type=str,
+    help="Prefix to use for the exported environment variables.",
+)
 @services_by_type
 @env_output(env_set_command="export")
 @click.pass_obj
-def up(services_ctx, services, wait, retries, randomize_ports):
+def up(services_ctx, services, wait, retries, randomize_ports, env_prefix):
     r"""Boots up the required services.
 
     Example:
@@ -221,9 +228,15 @@ def up(services_ctx, services, wait, retries, randomize_ports):
 
 
 @cli.command()
+@click.option(
+    "--env-prefix",
+    default="",
+    type=str,
+    help="Prefix to use for the exported environment variables.",
+)
 @env_output(env_set_command="unset")
 @click.pass_obj
-def down(services_ctx):
+def down(services_ctx, env_prefix):
     """Shuts down the required services."""
     services_down(filepath=services_ctx.filepath)
     click.secho("Services down!", fg="green")

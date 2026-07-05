@@ -142,7 +142,9 @@ def populate_env_configuration():
                     os.environ.setdefault(envvar_name, str(envvar_value))
 
 
-def print_setup_env_config(services, called_from, env_set_command="export"):
+def print_setup_env_config(
+    services, called_from, env_set_command="export", env_prefix=""
+):
     """Prints setup environment instructions."""
     should_print_instructions = False
     for service_type, services_list in services.items():
@@ -153,7 +155,7 @@ def print_setup_env_config(services, called_from, env_set_command="export"):
             )
 
         for key, value in get_service_env_vars(service_type, services_list):
-            command = f"{env_set_command} {key}"
+            command = f"{env_set_command} {env_prefix}{key}"
             if env_set_command == "export":
                 command += f"={value}"
             click.echo(command)
