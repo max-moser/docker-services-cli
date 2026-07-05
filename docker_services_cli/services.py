@@ -33,13 +33,38 @@ def _run_healthcheck_command(command, verbose=False):
         return False
 
 
-def search_healthcheck(*args, **kwargs):
-    """{Elastic,Open}Search healthcheck."""
+def es_healthcheck(*args, filepath=DOCKER_SERVICES_FILEPATH, **kwargs):
+    """Check the Elasticsearch service's health."""
     verbose = kwargs["verbose"]
 
-    return _run_healthcheck_command(
-        ["curl", "-f", "localhost:9200/_cluster/health?wait_for_status=green"], verbose
-    )
+    try:
+        port = get_public_service_ports(["elasticsearch"], filepath=filepath)[
+            "ELASTICSEARCH_PORT"
+        ]
+        return _run_healthcheck_command(
+            ["curl", "-f", f"localhost:{port}/_cluster/health?wait_for_status=green"],
+            verbose,
+        )
+    except Exception as e:
+        print(e)
+        return False
+
+
+def os_healthcheck(*args, filepath=DOCKER_SERVICES_FILEPATH, **kwargs):
+    """Check the OpenSearch service's health."""
+    verbose = kwargs["verbose"]
+
+    try:
+        port = get_public_service_ports(["opensearch"], filepath=filepath)[
+            "OPENSEARCH_PORT"
+        ]
+        return _run_healthcheck_command(
+            ["curl", "-f", f"localhost:{port}/_cluster/health?wait_for_status=green"],
+            verbose,
+        )
+    except Exception as e:
+        print(e)
+        return False
 
 
 def postgresql_healthcheck(*args, **kwargs):
@@ -144,8 +169,8 @@ def minio_healthcheck(*args, **kwargs):
 
 
 HEALTHCHECKS = {
-    "elasticsearch": search_healthcheck,
-    "opensearch": search_healthcheck,
+    "elasticsearch": es_healthcheck,
+    "opensearch": os_healthcheck,
     "postgresql": postgresql_healthcheck,
     "mysql": mysql_healthcheck,
     "rabbitmq": rabbitmq_healthcheck,
