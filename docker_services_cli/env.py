@@ -137,16 +137,17 @@ def override_default_versions_in_env(requested_services=None):
 
 def set_env():
     """Export the environment variables for services and versions."""
-    for key, value in SERVICES_ALL_DEFAULT_VERSIONS.items():
-        _set_default_env(key, value)
+    for version_key, version_value in SERVICES_ALL_DEFAULT_VERSIONS.items():
+        os.environ.setdefault(version_key, version_value)
 
-    for service in SERVICES.values():
-        for key, value in service.items():
-            if key.endswith("_VERSION"):
-                _load_or_set_env(key, value)
-            elif key == "CONTAINER_CONFIG_ENVIRONMENT_VARIABLES":
-                for envvar_name, envvar_value in value.items():
-                    _set_default_env(envvar_name, envvar_value)
+    for service_config in SERVICES.values():
+        for config_key, config_value in service_config.items():
+            if config_key.endswith("_VERSION"):
+                _load_or_set_env(config_key, config_value)
+
+            elif config_key == "CONTAINER_CONFIG_ENVIRONMENT_VARIABLES":
+                for envvar_name, envvar_value in config_value.items():
+                    os.environ.setdefault(envvar_name, envvar_value)
 
 
 def print_setup_env_config(services, called_from, env_set_command="export"):
