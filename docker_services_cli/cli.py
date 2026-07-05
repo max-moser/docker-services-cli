@@ -1,10 +1,12 @@
 # SPDX-FileCopyrightText: 2020 CERN.
+# SPDX-FileCopyrightText: 2026 TU Wien.
 # SPDX-License-Identifier: MIT
 
 """CLI module."""
 
 from functools import update_wrapper
 from pathlib import Path
+from subprocess import CalledProcessError
 
 import click
 
@@ -43,7 +45,18 @@ def env_output(env_set_command):
             if env:
                 # comment command output until env export
                 click.echo(": '")
-            click.get_current_context().invoke(func, *args, **kwargs)
+
+            try:
+                click.get_current_context().invoke(func, *args, **kwargs)
+            except CalledProcessError as e:
+                # in case someting goes wrong (e.g. the ports are already in use)
+                # we want to end the comment block after the command output and
+                # report an error
+                if env:
+                    click.echo("'")
+                click.echo(f"exit {e.returncode}")
+                exit(e.returncode)
+
             if env:
                 # end of multiline comment, start of export statements
                 click.echo("'")
