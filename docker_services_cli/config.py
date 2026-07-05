@@ -40,7 +40,6 @@ class ServiceType(Enum):
 DOCKER_SERVICES_FILEPATH = "docker-services.yml"
 """Docker services file default path."""
 
-# Elasticsearch
 ELASTICSEARCH = {
     "ELASTICSEARCH_VERSION": "ELASTICSEARCH_7_LATEST",
     "DEFAULT_VERSIONS": {
@@ -48,14 +47,17 @@ ELASTICSEARCH = {
     },
     "CONTAINER_CONNECTION_ENVIRONMENT_VARIABLES": {
         "search": {
-            "SEARCH_HOSTS": "\"[{'host': 'localhost', 'port': 9200}]\"",
+            "SEARCH_HOSTS": "\"[{'host': 'localhost', 'port': {ELASTICSEARCH_PORT}}]\"",
         }
+    },
+    "PORTS": {
+        "ELASTICSEARCH_PORT": 9200,
+        "ELASTICSEARCH_CLUSTER_PORT": 9300,
     },
     "TYPE": [ServiceType.search],
 }
 """Elasticsearch service configuration."""
 
-# Opensearch
 OPENSEARCH = {
     "OPENSEARCH_VERSION": "OPENSEARCH_2_LATEST",
     "DEFAULT_VERSIONS": {
@@ -64,14 +66,17 @@ OPENSEARCH = {
     },
     "CONTAINER_CONNECTION_ENVIRONMENT_VARIABLES": {
         "search": {
-            "SEARCH_HOSTS": "\"[{'host': 'localhost', 'port': 9200}]\"",
+            "SEARCH_HOSTS": "\"[{'host': 'localhost', 'port': {OPENSEARCH_PORT}}]\"",
         }
+    },
+    "PORTS": {
+        "OPENSEARCH_PORT": 9200,
+        "OPENSEARCH_CLUSTER_PORT": 9300,
     },
     "TYPE": [ServiceType.search],
 }
 """Opensearch service configuration."""
 
-# PostgreSQL
 POSTGRESQL = {
     "POSTGRESQL_VERSION": "POSTGRESQL_16_LATEST",
     "DEFAULT_VERSIONS": {
@@ -86,14 +91,16 @@ POSTGRESQL = {
     },
     "CONTAINER_CONNECTION_ENVIRONMENT_VARIABLES": {
         "db": {
-            "SQLALCHEMY_DATABASE_URI": "postgresql+psycopg2://invenio:invenio@localhost:5432/invenio"
+            "SQLALCHEMY_DATABASE_URI": "postgresql+psycopg2://invenio:invenio@localhost:{POSTGRESQL_PORT}/invenio"
         }
+    },
+    "PORTS": {
+        "POSTGRESQL_PORT": 5432,
     },
     "TYPE": [ServiceType.database],
 }
 """Postgresql service configuration."""
 
-# MySQL
 MYSQL = {
     "MYSQL_VERSION": "MYSQL_8_LATEST",
     "DEFAULT_VERSIONS": {"MYSQL_8_LATEST": "8.3"},
@@ -105,8 +112,11 @@ MYSQL = {
     },
     "CONTAINER_CONNECTION_ENVIRONMENT_VARIABLES": {
         "db": {
-            "SQLALCHEMY_DATABASE_URI": "mysql+pymysql://invenio:invenio@localhost:3306/invenio"
+            "SQLALCHEMY_DATABASE_URI": "mysql+pymysql://invenio:invenio@localhost:{MYSQL_PORT}/invenio"
         }
+    },
+    "PORTS": {
+        "MYSQL_PORT": 3306,
     },
     "TYPE": [ServiceType.database],
 }
@@ -119,8 +129,14 @@ REDIS = {
         "REDIS_7_LATEST": "7",
     },
     "CONTAINER_CONNECTION_ENVIRONMENT_VARIABLES": {
-        "mq": {"BROKER_URL": "redis://localhost:6379/0"},
-        "cache": {"CACHE_TYPE": "redis"},
+        "mq": {"BROKER_URL": "redis://localhost:{REDIS_PORT}/0"},
+        "cache": {
+            "CACHE_TYPE": "redis",
+            "CACHE_REDIS_URL": "redis://localhost:{REDIS_PORT}/0",
+        },
+    },
+    "PORTS": {
+        "REDIS_PORT": 6379,
     },
     "TYPE": [ServiceType.cache, ServiceType.message_queue],
 }
@@ -130,7 +146,11 @@ RABBITMQ = {
     "RABBITMQ_VERSION": "RABBITMQ_3_LATEST",
     "DEFAULT_VERSIONS": {"RABBITMQ_3_LATEST": "3"},
     "CONTAINER_CONNECTION_ENVIRONMENT_VARIABLES": {
-        "mq": {"BROKER_URL": "amqp://localhost:5672//"}
+        "mq": {"BROKER_URL": "amqp://localhost:{RABBITMQ_PORT}//"}
+    },
+    "PORTS": {
+        "RABBITMQ_PORT": 5672,
+        "RABBITMQ_MANAGEMENT_PORT": 15672,
     },
     "TYPE": [ServiceType.message_queue],
 }
@@ -148,11 +168,15 @@ MINIO = {
     },
     "CONTAINER_CONNECTION_ENVIRONMENT_VARIABLES": {
         "s3": {
-            "S3_ENDPOINT_URL": "http://localhost:9000",
+            "S3_ENDPOINT_URL": "http://localhost:{MINIO_PORT}",
             "S3_ACCESS_KEY_ID": "invenio",
             # minio needs at least 8 characters for the secret
             "S3_SECRET_ACCESS_KEY": "invenio8",
         }
+    },
+    "PORTS": {
+        "MINIO_PORT": 9000,
+        "MINIO_CONSOLE_PORT": 9001,
     },
     "TYPE": [ServiceType.s3],
 }

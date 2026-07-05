@@ -4,6 +4,7 @@
 
 """CLI module."""
 
+import os
 from functools import update_wrapper
 from pathlib import Path
 from subprocess import CalledProcessError
@@ -17,7 +18,7 @@ from .env import (
     populate_env_configuration,
     print_setup_env_config,
 )
-from .services import services_down, services_up
+from .services import get_public_service_ports, services_down, services_up
 
 
 def _get_module_path():
@@ -194,6 +195,15 @@ def up(services_ctx, services, wait, retries):
         retries=retries,
         verbose=services_ctx.verbose,
     )
+
+    # update the environment with the services' actual public ports before the
+    # `env_output()` logic kicks in, so that we get the correct ports printed
+    for env_var_name, port in get_public_service_ports(
+        services=normalized_services,
+        filepath=services_ctx.filepath,
+    ).items():
+        os.environ[env_var_name] = port
+
     click.secho("Services up!", fg="green")
 
 

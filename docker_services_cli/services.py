@@ -1,17 +1,18 @@
 # SPDX-FileCopyrightText: 2020 CERN.
 # SPDX-FileCopyrightText: 2024 Graz University of Technology.
 # SPDX-FileCopyrightText: 2025 CESNET z.s.p.o.
+# SPDX-FileCopyrightText: 2026 TU Wien.
 # SPDX-License-Identifier: MIT
 
 """Services module."""
 
 import time
 from os import path
-from subprocess import PIPE, Popen, check_call
+from subprocess import PIPE, Popen, check_call, run
 
 import click
 
-from .config import DOCKER_SERVICES_FILEPATH, MYSQL, SERVICE_TYPES
+from .config import DOCKER_SERVICES_FILEPATH, MYSQL, SERVICE_TYPES, SERVICES
 
 
 def _run_healthcheck_command(command, verbose=False):
@@ -226,3 +227,30 @@ def services_down(filepath=DOCKER_SERVICES_FILEPATH):
     command = ["docker", "compose", "--file", filepath, "down", "--volumes"]
 
     check_call(command)
+
+
+def get_public_service_ports(services, filepath=DOCKER_SERVICES_FILEPATH):
+    """Get the actual ports assigned to the services, as reported by docker compose.
+
+    This is useful when binding services to port 0, which assigns a randomly selected
+    free port for the service.
+    """
+    actual_ports = {}
+    base_command = ["docker", "compose", "--file", filepath, "port"]
+    for service in services:
+        for port_name, port_value in SERVICES[service].get("PORTS", {}).items():
+            # we assume the internal port to be the same as the configured default port
+            internal_port = str(port_value)
+
+            command = base_command + [service, internal_port]
+            completed_process = run(command, capture_output=True, check=True, text=True)
+
+            # the public port will typically be reported together with the address,
+            # e.g. 127.0.0.1:5432
+            public_port = completed_process.stdout
+            if ":" in public_port:
+                *_, public_port = public_port.split(":")
+
+            actual_ports[port_name] = public_port.strip()
+
+    return actual_ports

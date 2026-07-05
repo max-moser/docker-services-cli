@@ -4,13 +4,15 @@
 """Module tests."""
 
 import os
+import random
 
 import pytest
 
-from docker_services_cli.config import SERVICES
+from docker_services_cli.config import SERVICES, ServiceType
 from docker_services_cli.env import (
     _is_version,
     _set_service_version_in_env,
+    get_service_env_vars,
     override_default_versions_in_env,
     populate_env_configuration,
 )
@@ -104,3 +106,43 @@ def test_override_default_service_versions(
     populate_env_configuration()  # set default environment
     override_default_versions_in_env([service_and_version_string])
     assert os.getenv(envvar) == expected_value
+
+
+def test_service_port_overrides_default():
+    """Test the default port assignment for a service."""
+    # make sure that the environment is clean enough to start
+    os.environ.pop("ELASTICSEARCH_PORT", None)
+    assert "ELASTICSEARCH_PORT" not in os.environ
+
+    # check if the default value for the port gets pushed into the environment
+    populate_env_configuration()
+    assert os.getenv("ELASTICSEARCH_PORT") == "9200"
+
+    # check if the default port gets inserted correctly into the connection string
+    vars = get_service_env_vars(ServiceType.search.value, ["elasticsearch"])
+    assert len(vars) == 1
+    assert ("SEARCH_HOSTS", "\"[{'host': 'localhost', 'port': 9200}]\"") in vars
+
+
+def test_service_port_overrides_random():
+    """Test assignment of a random port for a service.
+
+    NOTE that port 0 is a special case (assigns a random free port).
+    Since this would require checking the docker daemon for the assigned public ports,
+    this cannot be covered here in this test case!
+    """
+    # set a random value for the port
+    port = str(random.randint(10000, 30000))
+    os.environ["ELASTICSEARCH_PORT"] = port
+
+    # check if the assigned value for the port gets pushed into the environment
+    populate_env_configuration()
+    assert os.getenv("ELASTICSEARCH_PORT") == port
+
+    # check if the assigned port gets inserted correctly into the connection string
+    vars = get_service_env_vars(ServiceType.search.value, ["elasticsearch"])
+    connection_string = vars[0][1]
+    assert len(vars) == 1
+    assert ("SEARCH_HOSTS", f"\"[{{'host': 'localhost', 'port': {port}}}]\"") in vars
+    assert "localhost" in connection_string
+    assert "9200" not in connection_string

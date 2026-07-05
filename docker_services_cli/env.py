@@ -137,9 +137,9 @@ def populate_env_configuration():
             if config_key.endswith("_VERSION"):
                 _set_service_version_in_env(config_key, config_value)
 
-            elif config_key == "CONTAINER_CONFIG_ENVIRONMENT_VARIABLES":
+            elif config_key in ["CONTAINER_CONFIG_ENVIRONMENT_VARIABLES", "PORTS"]:
                 for envvar_name, envvar_value in config_value.items():
-                    os.environ.setdefault(envvar_name, envvar_value)
+                    os.environ.setdefault(envvar_name, str(envvar_value))
 
 
 def print_setup_env_config(services, called_from, env_set_command="export"):
@@ -178,13 +178,21 @@ def get_service_env_vars(service_type, services_list):
     """Get all or a subset of service environment variables."""
     envvars = []
     for service in services_list:
+        service_name = normalize_service_name(service)
+        service_config = SERVICES.get(service_name)
+
         service_envvars_by_type = (
-            SERVICES.get(normalize_service_name(service))
-            .get("CONTAINER_CONNECTION_ENVIRONMENT_VARIABLES", {})
+            service_config.get("CONTAINER_CONNECTION_ENVIRONMENT_VARIABLES", {})
             .get(service_type, {})
             .items()
         )
-        for key, value in service_envvars_by_type:
-            envvars.append((key, value))
+
+        for env_name, env_value in service_envvars_by_type:
+            # replace the port placeholders in the env vars (i.e. connection strings)
+            for port_var_name, default_port in service_config.get("PORTS", {}).items():
+                port = os.environ.get(port_var_name, default_port)
+                env_value = env_value.replace(f"{{{port_var_name}}}", str(port))
+
+            envvars.append((env_name, env_value))
 
     return envvars
