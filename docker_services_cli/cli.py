@@ -159,7 +159,7 @@ def cli(ctx, filepath, verbose):
 
 @cli.command()
 @click.option(
-    "--no-wait",
+    "--wait/--no-wait",
     is_flag=True,
     help="Wait for services to be up (use healthchecks).",
 )
@@ -172,7 +172,7 @@ def cli(ctx, filepath, verbose):
 @services_by_type
 @env_output(env_set_command="export")
 @click.pass_obj
-def up(services_ctx, services, no_wait, retries):
+def up(services_ctx, services, wait, retries):
     r"""Boots up the required services.
 
     Example:
@@ -193,7 +193,7 @@ def up(services_ctx, services, no_wait, retries):
     services_up(
         services=normalized_services,
         filepath=services_ctx.filepath,
-        wait=(not no_wait),
+        wait=wait,
         retries=retries,
         verbose=services_ctx.verbose,
     )
