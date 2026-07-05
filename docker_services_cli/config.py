@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2020-2025 CERN.
 # SPDX-FileCopyrightText: 2024 Graz University of Technology.
 # SPDX-FileCopyrightText: 2025 CESNET z.s.p.o.
+# SPDX-FileCopyrightText: 2026 TU Wien.
 # SPDX-License-Identifier: MIT
 
 """Configuration module.
@@ -23,6 +24,19 @@ This means that the environment set/load logic will first set the default
 versions before loading a given service's version.
 """
 
+from enum import Enum
+
+
+class ServiceType(Enum):
+    """Enum with the various known service types."""
+
+    search = "search"
+    database = "db"
+    cache = "cache"
+    message_queue = "mq"
+    s3 = "s3"
+
+
 DOCKER_SERVICES_FILEPATH = "docker-services.yml"
 """Docker services file default path."""
 
@@ -37,6 +51,7 @@ ELASTICSEARCH = {
             "SEARCH_HOSTS": "\"[{'host': 'localhost', 'port': 9200}]\"",
         }
     },
+    "TYPE": [ServiceType.search],
 }
 """Elasticsearch service configuration."""
 
@@ -52,6 +67,7 @@ OPENSEARCH = {
             "SEARCH_HOSTS": "\"[{'host': 'localhost', 'port': 9200}]\"",
         }
     },
+    "TYPE": [ServiceType.search],
 }
 """Opensearch service configuration."""
 
@@ -73,6 +89,7 @@ POSTGRESQL = {
             "SQLALCHEMY_DATABASE_URI": "postgresql+psycopg2://invenio:invenio@localhost:5432/invenio"
         }
     },
+    "TYPE": [ServiceType.database],
 }
 """Postgresql service configuration."""
 
@@ -91,6 +108,7 @@ MYSQL = {
             "SQLALCHEMY_DATABASE_URI": "mysql+pymysql://invenio:invenio@localhost:3306/invenio"
         }
     },
+    "TYPE": [ServiceType.database],
 }
 """MySQL service configuration."""
 
@@ -104,6 +122,7 @@ REDIS = {
         "mq": {"BROKER_URL": "redis://localhost:6379/0"},
         "cache": {"CACHE_TYPE": "redis"},
     },
+    "TYPE": [ServiceType.cache, ServiceType.message_queue],
 }
 """Redis service configuration."""
 
@@ -113,6 +132,7 @@ RABBITMQ = {
     "CONTAINER_CONNECTION_ENVIRONMENT_VARIABLES": {
         "mq": {"BROKER_URL": "amqp://localhost:5672//"}
     },
+    "TYPE": [ServiceType.message_queue],
 }
 """RabbitMQ service configuration."""
 
@@ -134,6 +154,7 @@ MINIO = {
             "S3_SECRET_ACCESS_KEY": "invenio8",
         }
     },
+    "TYPE": [ServiceType.s3],
 }
 """MINIO service configuration."""
 
@@ -149,23 +170,20 @@ SERVICES = {
 """List of services to configure."""
 
 SERVICES_ALL_DEFAULT_VERSIONS = {
-    **ELASTICSEARCH.get("DEFAULT_VERSIONS", {}),
-    **OPENSEARCH.get("DEFAULT_VERSIONS", {}),
-    **POSTGRESQL.get("DEFAULT_VERSIONS", {}),
-    **REDIS.get("DEFAULT_VERSIONS", {}),
-    **MYSQL.get("DEFAULT_VERSIONS", {}),
-    **RABBITMQ.get("DEFAULT_VERSIONS", {}),
-    **MINIO.get("DEFAULT_VERSIONS", {}),
+    name: version
+    for service in SERVICES.values()
+    for name, version in service.get("DEFAULT_VERSIONS", {}).items()
 }
-"""Services default latest versions."""
+"""Services default latest versions.
+
+E.g.: ``{'ELASTICSEARCH_7_LATEST': '7.10.2', 'MINIO_2025_LATEST': 'latest', ...}``
+"""
 
 SERVICE_TYPES = {
-    "search": ["opensearch", "elasticsearch"],
-    "db": ["mysql", "postgresql"],
-    "cache": [
-        "redis",
-    ],
-    "mq": ["rabbitmq", "redis"],
-    "s3": ["minio"],
+    st.value: [name for name, config in SERVICES.items() if st in config["TYPE"]]
+    for st in ServiceType
 }
-"""Types of offered services."""
+"""Types of offered services.
+
+E.g.: ``{'search': ['elasticsearch', 'opensearch'], 's3': ['minio'], ...}``
+"""
