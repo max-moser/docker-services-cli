@@ -127,8 +127,8 @@ def override_default_versions_in_env(requested_services=None):
             exit(1)
 
 
-def set_env():
-    """Export the environment variables for services and versions."""
+def populate_env_configuration():
+    """Export the environment variables for default services and versions."""
     for version_key, version_value in SERVICES_ALL_DEFAULT_VERSIONS.items():
         os.environ.setdefault(version_key, version_value)
 

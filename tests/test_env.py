@@ -12,7 +12,7 @@ from docker_services_cli.env import (
     _is_version,
     _set_service_version_in_env,
     override_default_versions_in_env,
-    set_env,
+    populate_env_configuration,
 )
 
 
@@ -101,6 +101,6 @@ def test_override_default_service_versions(
     service_and_version_string, envvar, expected_value
 ):
     """Test overriding default versions with service+version strings."""
-    set_env()  # set default environment
+    populate_env_configuration()  # set default environment
     override_default_versions_in_env([service_and_version_string])
     assert os.getenv(envvar) == expected_value

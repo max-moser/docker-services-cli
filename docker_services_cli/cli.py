@@ -14,8 +14,8 @@ from .config import SERVICE_TYPES
 from .env import (
     normalize_service_name,
     override_default_versions_in_env,
+    populate_env_configuration,
     print_setup_env_config,
-    set_env,
 )
 from .services import services_down, services_up
 
@@ -150,7 +150,7 @@ class ServicesCtx(object):
 @click.pass_context
 def cli(ctx, filepath, verbose):
     """Initialize CLI context."""
-    set_env()
+    populate_env_configuration()
     ctx.obj = ServicesCtx(filepath=filepath, verbose=verbose)
 
 
