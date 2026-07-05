@@ -30,21 +30,20 @@ def normalize_service_name(service_with_version):
     return service_name
 
 
-def _set_default_env(services_version, default_version):
-    """Set environmental variable value if it does not exist."""
-    os.environ[services_version] = os.environ.get(services_version, default_version)
-
-
-def _is_version(version):
+def _is_version(version, allow_latest=False):
     """Checks if a string is a version of the format `x.y.z`.
 
-    NOTE: It is not mandatory to be up to patch level. The following would be
-    accepted:
+    If ``allow_latest`` is set, then "latest" is also accepted.
+
+    NOTE: It is not mandatory to be up to patch level. The following would be accepted:
     - 10.1
     - 9
     - 15.0.1a2
     """
     try:
+        if version == "latest" and allow_latest:
+            return True
+
         # the regex is taken from distutil's StrictVersion
         version_re = re.compile(
             r"^(\d+) (\. (\d+) (\. (\d+))? ([ab](\d+))?)?$", re.VERBOSE | re.ASCII
@@ -54,37 +53,30 @@ def _is_version(version):
         return False
 
 
-def _load_or_set_env(services_version, default_version):
-    """Set a specific service version from the environment.
+def _set_service_version_in_env(service_version_key, default_if_unset):
+    """Determine the version for the service to use, and set the appropriate env var.
 
-    It parses the value to distinguish between a version and a defined latest.
-    NOTE: It requires that all variables for latest versions have been set up.
+    First, the environment is checked for version specifications.
+    If no value is specified, the ``default_if_unset`` is used.
+
+    If the determined value is neither a version number nor "latest", it will be
+    interpreted as the name for another environment variable to look up and use as
+    version number (this is generally used by the default config).
+
+    If a valid version can be determined, it will be set in the environment.
+    Otherwise, execution will be aborted.
     """
-    version_from_env = os.environ.get(services_version, default_version)
-    # e.g. the ES_7_LATEST string from env, need a second get.
-    major_version_from_env = os.environ.get(version_from_env)
+    version = os.environ.get(service_version_key, default_if_unset)
+    if version and not _is_version(version, allow_latest=True):
+        # next to "normal" version numbers, we also support references to other config
+        # values via their name (e.g. ``POSTGRESQL_VERSION="POSTGRESQL_16_LATEST"``)
+        version = os.environ.get(version, None)
 
-    if not version_from_env:
-        os.environ[services_version] = default_version
-
-    elif (
-        _is_version(version_from_env)
-        # for example for minio, where we do not have a semantic version
-        or version_from_env == "latest"
-    ):
-        os.environ[services_version] = version_from_env
-
-    elif major_version_from_env and (
-        _is_version(major_version_from_env)
-        # for example for minio, where we do not have a semantic version
-        or major_version_from_env == "latest"
-    ):
-        os.environ[services_version] = major_version_from_env
-
+    if version and _is_version(version, allow_latest=True):
+        os.environ[service_version_key] = version
     else:
         click.secho(
-            f"Environment variable for version {version_from_env} not set \
-            or set to a non-compliant format (dot separated numbers).",
+            f"{service_version_key} has an invalid version format: {version}",
             fg="red",
         )
         sys.exit(1)
@@ -143,7 +135,7 @@ def set_env():
     for service_config in SERVICES.values():
         for config_key, config_value in service_config.items():
             if config_key.endswith("_VERSION"):
-                _load_or_set_env(config_key, config_value)
+                _set_service_version_in_env(config_key, config_value)
 
             elif config_key == "CONTAINER_CONFIG_ENVIRONMENT_VARIABLES":
                 for envvar_name, envvar_value in config_value.items():
