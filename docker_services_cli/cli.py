@@ -13,7 +13,7 @@ import click
 from .config import SERVICE_TYPES
 from .env import (
     normalize_service_name,
-    override_default_env,
+    override_default_versions_in_env,
     print_setup_env_config,
     set_env,
 )
@@ -183,7 +183,7 @@ def up(services_ctx, services, wait, retries):
     if len(_services) == 1 and _services[0].lower() == "all":
         _services = []
 
-    override_default_env(services_to_override=_services)
+    override_default_versions_in_env(requested_services=_services)
     click.secho("Environment setup", fg="green")
 
     normalized_services = [normalize_service_name(s) for s in _services]

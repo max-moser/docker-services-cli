@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2020 CERN.
 # SPDX-FileCopyrightText: 2024 Graz University of Technology.
 # SPDX-FileCopyrightText: 2025 CESNET z.s.p.o.
+# SPDX-FileCopyrightText: 2026 TU Wien.
 # SPDX-License-Identifier: MIT
 
 """Environment module."""
@@ -89,44 +90,49 @@ def _load_or_set_env(services_version, default_version):
         sys.exit(1)
 
 
-def override_default_env(services_to_override=None):
-    """Override default environment according to list of services with version.
+def override_default_versions_in_env(requested_services=None):
+    """Override default version entries for services in the environment.
 
-    :param services_to_override: List of service name strings including
-        service version without any separator e.g. ``postgresql11``.
+    For each service in the list of ``requested_services`` that have a specific major
+    version attached to their name as suffix (e.g. ``postgresql11`` instead of
+    ``postgresql``), override the environment variable specifying the service's
+    version to be used (based on the suffix).
+    If the requested version is unavailable, execution will be aborted with a
+    suggestion about available values.
+
+    :param requested_services: List of service names, optionally with a major version
+        as a suffix; e.g. ``postgresql11``.
     """
-    services_to_override = set(services_to_override or []).difference(SERVICES.keys())
-    if services_to_override:
-        num_services_to_override = len(services_to_override)
-        for service_name in SERVICES:
-            for service_override in services_to_override:
-                if service_name in service_override:
-                    service_override_version = service_override.replace(
-                        service_name, ""
-                    )
-                    env_var_with_version = (
-                        f"{service_name.upper()}_{service_override_version}_LATEST"
-                    )
-                    if SERVICES_ALL_DEFAULT_VERSIONS.get(env_var_with_version):
-                        os.environ[f"{service_name.upper()}_VERSION"] = (
-                            SERVICES_ALL_DEFAULT_VERSIONS.get(env_var_with_version)
-                        )
-                    else:
-                        available_major_versions = [
-                            v.split(".")[0]
-                            for v in SERVICES[service_name]["DEFAULT_VERSIONS"].values()
-                        ]
-                        click.secho(
-                            f"No major version {service_override_version} "
-                            f"for {service_name}. "
-                            "Please use one of the available "
-                            f"ones: {available_major_versions}",
-                            fg="red",
-                        )
-                        exit(1)
-                    num_services_to_override -= 1
-                    if not num_services_to_override:
-                        return
+    # we're only interested in non-standard service specifications
+    # e.g. we look into "postgresql11" but not "postgresql"
+    customized_services = set(requested_services or []).difference(SERVICES.keys())
+
+    for customization in customized_services:
+        service_name = normalize_service_name(customization)
+        if not service_name:
+            click.secho(f"Could not identify the service {service_name}", fg="red")
+            exit(1)
+
+        major_version = customization.replace(service_name, "")
+        default_version = SERVICES_ALL_DEFAULT_VERSIONS.get(
+            f"{service_name.upper()}_{major_version}_LATEST"
+        )
+        if default_version:
+            os.environ[f"{service_name.upper()}_VERSION"] = default_version
+
+        else:
+            # if we could not find a fitting entry for the requested service + version,
+            # we make suggestions based on the available version values
+            available_major_versions = [
+                v.split(".")[0]
+                for v in SERVICES[service_name]["DEFAULT_VERSIONS"].values()
+            ]
+            click.secho(
+                f"No major version {major_version} for {service_name}. "
+                f"Please use one of the available ones: {available_major_versions}",
+                fg="red",
+            )
+            exit(1)
 
 
 def set_env():
