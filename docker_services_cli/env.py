@@ -7,8 +7,8 @@
 
 import logging
 import os
+import re
 import sys
-from distutils.version import StrictVersion
 
 import click
 
@@ -44,11 +44,11 @@ def _is_version(version):
     - 15.0.1a2
     """
     try:
-        # StrictVersion fails on plain numbers (e.g. "10")
-        if version.isnumeric():
-            return True
-        StrictVersion(version)
-        return True
+        # the regex is taken from distutil's StrictVersion
+        version_re = re.compile(
+            r"^(\d+) (\. (\d+) (\. (\d+))? ([ab](\d+))?)?$", re.VERBOSE | re.ASCII
+        )
+        return version_re.match(version)
     except Exception:
         return False
 

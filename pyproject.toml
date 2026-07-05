@@ -21,7 +21,6 @@ classifiers = [
   "Development Status :: 3 - Alpha",
 ]
 dependencies = [
-  "check-manifest>=0.42",
   "click>=7.0",
 ]
 dynamic = ["version"]
