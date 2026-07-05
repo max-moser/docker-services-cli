@@ -4,6 +4,7 @@
 
 """CLI module."""
 
+import json
 import os
 from functools import update_wrapper
 from pathlib import Path
@@ -11,7 +12,7 @@ from subprocess import CalledProcessError
 
 import click
 
-from .config import SERVICE_TYPES
+from .config import SERVICE_TYPES, SERVICES
 from .env import (
     normalize_service_name,
     override_default_versions_in_env,
@@ -214,3 +215,20 @@ def down(services_ctx):
     """Shuts down the required services."""
     services_down(filepath=services_ctx.filepath)
     click.secho("Services down!", fg="green")
+
+
+@cli.command()
+@click.option(
+    "--pretty",
+    is_flag=True,
+    help="Pretty-print the output.",
+)
+@click.pass_obj
+def show_services(services_ctx, pretty):
+    """Show the supported services with their default configuration."""
+    serialized_services = {**SERVICES}
+    for service in serialized_services.values():
+        types = service.get("TYPE", [])
+        service["TYPE"] = [t.value for t in types]
+
+    click.echo(json.dumps(serialized_services, indent=2 if pretty else None))
