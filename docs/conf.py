@@ -4,10 +4,6 @@
 
 """Sphinx configuration."""
 
-import os
-
-import sphinx.environment
-
 from docker_services_cli import __version__
 
 # -- General configuration ------------------------------------------------
