@@ -41,6 +41,7 @@ environment variables:
     $ REDIS_PORT=1993 docker-services-cli up --search opensearch --db postgresql --cache redis
 
 Note that port 0 is a special value on Unix systems, which assigns a random free port!
+The CLI provides a ``--randomize-ports`` flag to do this automatically.
 
 The available services with their configuration can be displayed via the CLI:
 

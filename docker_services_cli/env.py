@@ -196,3 +196,16 @@ def get_service_env_vars(service_type, services_list):
             envvars.append((env_name, env_value))
 
     return envvars
+
+
+def randomize_service_ports_env(services_list):
+    """Set each service's ports to special value 0 in the environment.
+
+    On Unix systems, binding to port 0 has the special meaning of assigning a random
+    free port.
+    """
+    for service in services_list:
+        service_name = normalize_service_name(service)
+        service_config = SERVICES.get(service_name)
+        for port_var_name, default_port in service_config.get("PORTS", {}).items():
+            os.environ[port_var_name] = "0"

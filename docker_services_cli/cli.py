@@ -18,6 +18,7 @@ from .env import (
     override_default_versions_in_env,
     populate_env_configuration,
     print_setup_env_config,
+    randomize_service_ports_env,
 )
 from .services import get_public_service_ports, services_down, services_up
 
@@ -168,10 +169,19 @@ def cli(ctx, filepath, verbose):
     type=int,
     help="Number of times to retry a service's healthcheck.",
 )
+@click.option(
+    "--randomize-ports",
+    is_flag=True,
+    default=False,
+    help=(
+        "Use randomized ports for the services (assign port 0 for each service). "
+        "This may not work on all platforms."
+    ),
+)
 @services_by_type
 @env_output(env_set_command="export")
 @click.pass_obj
-def up(services_ctx, services, wait, retries):
+def up(services_ctx, services, wait, retries, randomize_ports):
     r"""Boots up the required services.
 
     Example:
@@ -186,6 +196,8 @@ def up(services_ctx, services, wait, retries):
         _services = []
 
     override_default_versions_in_env(requested_services=_services)
+    if randomize_ports:
+        randomize_service_ports_env(_services)
     click.secho("Environment setup", fg="green")
 
     normalized_services = [normalize_service_name(s) for s in _services]
