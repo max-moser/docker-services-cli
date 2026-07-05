@@ -149,11 +149,8 @@ def print_setup_env_config(services, called_from, env_set_command="export"):
     for service_type, services_list in services.items():
         if called_from == "up" and len(services_list) > 1:
             logging.warning(
-                "Multiple %s services %s are being configured. "
-                "Note that only %s will be accessible.",
-                service_type,
-                services_list,
-                services_list[-1],
+                f"Multiple {service_type} services {services_list} are being configured. "
+                f"Note that only {services_list[-1]} will be accessible.",
             )
 
         for key, value in get_service_env_vars(service_type, services_list):
@@ -169,7 +166,7 @@ def print_setup_env_config(services, called_from, env_set_command="export"):
         if called_from == "up" and services != SERVICE_TYPES:
             instructions += " " + " ".join(
                 [
-                    "--{0} {1}".format(service_type, service)
+                    f"--{service_type} {service}"
                     for service_type, services_list in services.items()
                     for service in services_list
                 ]

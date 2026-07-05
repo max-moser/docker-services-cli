@@ -102,23 +102,20 @@ def services_by_type(func):
                 or normalize_service_name(service) in available_services
             ):
                 raise click.BadParameter(
-                    "{service} is not a valid service of type {type}. "
-                    "Try one of: \n{available_services}".format(
-                        service=service,
-                        type=service_type.name,
-                        available_services=available_services,
-                    )
+                    f"{service} is not a valid service of type {service_type.name}. "
+                    f"Try one of: \n{available_services}"
                 )
         return list(services_list)
 
     for service_type in SERVICE_TYPES:
+        service_types = ", ".join(SERVICE_TYPES.get(service_type))
         click.option(
-            "--{}".format(service_type),
+            f"--{service_type}",
             callback=validate_service_name,
             multiple=True,
-            help="Specify which service should run as {0}. "
-            "Available {0} services: {1}.".format(
-                service_type, ", ".join(SERVICE_TYPES.get(service_type))
+            help=(
+                f"Specify which service should run as {service_type}. "
+                f"Available {service_type} services: {service_types}."
             ),
         )(func)
 
