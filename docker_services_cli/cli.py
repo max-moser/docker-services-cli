@@ -185,10 +185,18 @@ def cli(ctx, filepath, verbose):
     type=str,
     help="Prefix to use for the exported environment variables.",
 )
+@click.option(
+    "--project-name",
+    default=None,
+    type=str,
+    help="Project name to use for the services.",
+)
 @services_by_type
 @env_output(env_set_command="export")
 @click.pass_obj
-def up(services_ctx, services, wait, retries, randomize_ports, env_prefix):
+def up(
+    services_ctx, services, project_name, wait, retries, randomize_ports, env_prefix
+):
     r"""Boots up the required services.
 
     Example:
@@ -211,6 +219,7 @@ def up(services_ctx, services, wait, retries, randomize_ports, env_prefix):
     services_up(
         services=normalized_services,
         filepath=services_ctx.filepath,
+        project_name=project_name,
         wait=wait,
         retries=retries,
         verbose=services_ctx.verbose,
@@ -221,6 +230,7 @@ def up(services_ctx, services, wait, retries, randomize_ports, env_prefix):
     for env_var_name, port in get_public_service_ports(
         services=normalized_services,
         filepath=services_ctx.filepath,
+        project_name=project_name,
     ).items():
         os.environ[env_var_name] = port
 
@@ -234,11 +244,17 @@ def up(services_ctx, services, wait, retries, randomize_ports, env_prefix):
     type=str,
     help="Prefix to use for the exported environment variables.",
 )
+@click.option(
+    "--project-name",
+    default=None,
+    type=str,
+    help="Project name to use for the services.",
+)
 @env_output(env_set_command="unset")
 @click.pass_obj
-def down(services_ctx, env_prefix):
+def down(services_ctx, project_name, env_prefix):
     """Shuts down the required services."""
-    services_down(filepath=services_ctx.filepath)
+    services_down(filepath=services_ctx.filepath, project_name=project_name)
     click.secho("Services down!", fg="green")
 
 
